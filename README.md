@@ -11,5 +11,6 @@ Examples:
   3. awsinfra --status=I{r-ec999de4,r-ec999de5},V                            ->  List only instances IDs and vpns
 
 Vpn in this version is hardcoded (e.g. Customer Private Gateway, Virtual Private Gateway, CIDR, etc.)
+
 Vpn doesn't allow list of IDs
 
