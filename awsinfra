@@ -1,0 +1,43 @@
+### BEGIN INIT INFO
+# Short-Description  AWS Infrastructure start stop status
+# Description:       Prepare the AWS infrastructure by starting instances and creating the VPN
+### END INIT INFO
+
+case "$1" in
+start)
+	ec2-start-instances i-93438d9c
+	ec2-create-vpn-connection --type ipsec.1 --customer-gateway cgw-5172af4f --vpn-gateway vgw-2271ac3c --static-routes-only true
+        tries=0
+	while [ -z "$vpnid" ] && [ $tries -lt 20 ] ; do
+		vpnid=`ec2-describe-vpn-connections | grep vpn | grep available| awk -F\  '{print $2}'`
+		tries=$((tries+1))
+		sleep 6s
+	done
+	if [ ! -z "$vpnid" ]; then
+		ec2-create-vpn-connection-route --vpn-connection "$vpnid" --cidr 10.0.0.0/16
+	else
+		echo "Static route not implemented due VPN not being available."
+	fi
+        ;;
+
+stop)
+	ec2-stop-instances i-93438d9c
+	vpnid=`ec2-describe-vpn-connections | grep vpn | grep available| awk -F\  '{print $2}'`
+	if [ ! -z "$vpnid" ]; then
+		ec2-delete-vpn-connection "$vpnid"
+	fi
+        ;;
+
+status)
+	ec2-describe-instance-status i-93438d9c
+	ec2-describe-vpn-connections
+        ;;
+
+*)
+        echo "Usage: awsinfra {start|stop|status}"
+        exit 1
+        ;;
+esac
+
+exit 0
+
